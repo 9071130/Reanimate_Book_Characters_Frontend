@@ -1,9 +1,9 @@
 <template>
   <div class="model-train-main">
     <div class="train-card">
-      <div class="train-title">模型训练</div>
+      <div class="train-title">{{ lang === 'zh' ? '模型训练' : 'Model Training' }}</div>
       <div class="dataset-select-bar">
-        <el-select v-model="selectedDataset" placeholder="请选择数据集" class="dataset-select">
+        <el-select v-model="selectedDataset" :placeholder="lang === 'zh' ? '请选择数据集' : 'Please select dataset'" class="dataset-select">
           <el-option 
             v-for="task in completedTasks" 
             :key="task.task_id" 
@@ -16,10 +16,10 @@
       <!-- 隐藏的输入框 -->
       <div style="display: none;">
         <div class="param-item">
-          <div class="param-label">预训练模型路径</div>
+          <div class="param-label">{{ lang === 'zh' ? '预训练模型路径' : 'Pretrained Model Path' }}</div>
           <el-input 
             v-model="pretrainedModelPath" 
-            placeholder="请输入预训练模型路径"
+            :placeholder="lang === 'zh' ? '请输入预训练模型路径' : 'Please enter pretrained model path'"
             class="param-input"
           />
         </div>
@@ -28,25 +28,25 @@
           <div class="param-label">HuggingFace API</div>
           <el-input 
             v-model="hfApi" 
-            placeholder="请输入HuggingFace API"
+            :placeholder="lang === 'zh' ? '请输入HuggingFace API' : 'Please enter HuggingFace API'"
             class="param-input"
           />
         </div>
 
         <div class="param-item">
-          <div class="param-label">Safetensors保存路径</div>
+          <div class="param-label">{{ lang === 'zh' ? 'Safetensors保存路径' : 'Safetensors Save Path' }}</div>
           <el-input 
             v-model="uploadPathSafetensors" 
-            placeholder="请输入safetensors格式模型保存路径"
+            :placeholder="lang === 'zh' ? '请输入safetensors格式模型保存路径' : 'Please enter safetensors save path'"
             class="param-input"
           />
         </div>
 
         <div class="param-item">
-          <div class="param-label">GGUF保存路径</div>
+          <div class="param-label">{{ lang === 'zh' ? 'GGUF保存路径' : 'GGUF Save Path' }}</div>
           <el-input 
             v-model="uploadPathGguf" 
-            placeholder="请输入gguf格式模型保存路径"
+            :placeholder="lang === 'zh' ? '请输入gguf格式模型保存路径' : 'Please enter gguf save path'"
             class="param-input"
           />
         </div>
@@ -57,13 +57,13 @@
           type="primary" 
           :disabled="!isFormValid" 
           @click="startModelTrain"
-        >开始训练</el-button>
+        >{{ lang === 'zh' ? '开始训练' : 'Start Training' }}</el-button>
       </div>
     </div>
     <!-- 右侧任务区域 -->
     <div class="train-task-container">
       <div class="task-card task-card-merged">
-        <div class="task-title">训练任务列表与进度</div>
+        <div class="task-title">{{ lang === 'zh' ? '训练任务列表与进度' : 'Train Task List & Progress' }}</div>
         <div class="task-progress-list">
           <div v-for="task in trainTaskList" :key="task.task_id" class="task-progress-item">
             <div class="task-progress-row">
@@ -81,18 +81,18 @@
                     type="success"
                     size="small"
                     style="margin-left: 6px;vertical-align: middle;"
-                  >已完成</el-tag>
+                  >{{ lang === 'zh' ? '已完成' : 'Completed' }}</el-tag>
                   <el-tag
                     v-else-if="task.status === 'running'"
                     type="info"
                     size="small"
                     style="margin-left: 6px;vertical-align: middle;"
-                  >训练中</el-tag>
+                  >{{ lang === 'zh' ? '训练中' : 'Training' }}</el-tag>
                   <el-tag
                     v-else
                     size="small"
                     style="margin-left: 6px;vertical-align: middle;"
-                  >未开始</el-tag>
+                  >{{ lang === 'zh' ? '未开始' : 'Not Started' }}</el-tag>
                 </template>
               </el-progress>
             </div>
@@ -107,6 +107,8 @@
 import { ref, onMounted, computed, onUnmounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { post, get } from '@/utils/request'
+
+const lang = ref(localStorage.getItem('site_lang') || 'zh')
 
 const datasetList = ref([])
 const completedTasks = ref([])
@@ -154,38 +156,29 @@ const loadTrainTaskList = () => {
   trainTaskList.value = JSON.parse(localStorage.getItem('train_task_list') || '[]')
 }
 
-let trainStatusTimer = null // 定时器句柄
+// 新增：用于存储每个running训练任务的定时器
+const trainStatusTimers = {}
 
-// 获取训练任务状态
-const fetchTrainTaskStatus = async () => {
-  console.log('进入轮询函数')
-  if (!selectedTrainTaskId.value) return
+// 新增：查询单个训练任务状态
+const fetchSingleTrainTaskStatus = async (taskId) => {
+  console.log('fetchSingleTrainTaskStatus 调用, taskId:', taskId)
   try {
-    console.log('进入请求')
-    const res = await get('/get_task_status', { 
-      task_type: 'training_model', 
-      task_id: selectedTrainTaskId.value 
-    })
+    const res = await get('/get_task_status', { task_type: 'training_model', task_id: taskId })
     const data = res.data || res
     if (Array.isArray(data.status_list)) {
       const last = data.status_list[data.status_list.length - 1]
-      trainTaskStatus.value = last.status
-      if (last.status === 'running') {
-        trainRunningTime.value = last.timestamp
-      } else if (last.status === 'success') {
-        trainSuccessTime.value = last.timestamp
-      }
-      // 更新任务列表状态
-      const idx = trainTaskList.value.findIndex(t => t.task_id === selectedTrainTaskId.value)
+      // 更新本地任务列表
+      const idx = trainTaskList.value.findIndex(t => t.task_id === taskId)
       if (idx !== -1) {
         trainTaskList.value[idx].status = last.status
         saveTrainTaskList()
       }
-      // 任务完成时清除定时器
+      // 如果任务完成，清除定时器
       if (last.status === 'success' || last.status === 'failed') {
-        if (trainStatusTimer) {
-          clearInterval(trainStatusTimer)
-          trainStatusTimer = null
+        if (trainStatusTimers[taskId]) {
+          console.log('训练任务完成，清除定时器，taskId:', taskId)
+          clearInterval(trainStatusTimers[taskId])
+          delete trainStatusTimers[taskId]
         }
       }
     }
@@ -194,25 +187,34 @@ const fetchTrainTaskStatus = async () => {
   }
 }
 
-// 选择训练任务
-const onTrainTaskSelect = (taskId) => {
-  console.log('选择任务:', taskId)
-  if (!taskId) return
-  // 清理已有定时器
-  if (trainStatusTimer) {
-    clearInterval(trainStatusTimer)
-    trainStatusTimer = null
-  }
-  // 立即查询一次
-  fetchTrainTaskStatus()
-  // 启动1分钟轮询
-  trainStatusTimer = setInterval(fetchTrainTaskStatus, 60000)
-}
-
+// 页面挂载时，遍历所有running训练任务，立即查一次并开启定时器
 onMounted(() => {
   loadCompletedDatasets()
   loadDatasetTaskList()
   loadTrainTaskList()
+  console.log('onMounted trainTaskList:', JSON.stringify(trainTaskList.value))
+  trainTaskList.value.forEach(task => {
+    if (task.status === 'running') {
+      console.log('发现running训练任务，task_id:', task.task_id)
+      fetchSingleTrainTaskStatus(task.task_id) // 立即查一次
+      trainStatusTimers[task.task_id] = setInterval(() => {
+        console.log('训练定时器触发，task_id:', task.task_id)
+        fetchSingleTrainTaskStatus(task.task_id)
+      }, 60000)
+    }
+  })
+  // 监听语言变化事件
+  window.addEventListener('languageChanged', () => {
+    lang.value = localStorage.getItem('site_lang') || 'zh'
+  })
+})
+
+// 页面卸载时清理所有定时器
+onUnmounted(() => {
+  Object.values(trainStatusTimers).forEach(timer => clearInterval(timer))
+  window.removeEventListener('languageChanged', () => {
+    lang.value = localStorage.getItem('site_lang') || 'zh'
+  })
 })
 
 const startModelTrain = async () => {
@@ -246,15 +248,14 @@ const startModelTrain = async () => {
           task_id: selectedTask.task_id,
           role_name: selectedTask.role_name || '',
           novel_name: selectedTask.novel_name || '',
-          timestamp: new Date().toLocaleString()
+          timestamp: new Date().toLocaleString(),
+          status: 'running'
         })
         saveTrainTaskList()
       }
       selectedTrainTaskId.value = selectedTask.task_id
       // 立即查询一次任务进度并启动轮询
-      fetchTrainTaskStatus()
-      if (trainStatusTimer) clearInterval(trainStatusTimer)
-      trainStatusTimer = setInterval(fetchTrainTaskStatus, 60000)
+      fetchSingleTrainTaskStatus(selectedTask.task_id)
     } else {
       throw new Error(res.msg || '启动训练失败')
     }
@@ -265,14 +266,6 @@ const startModelTrain = async () => {
     training.value = false
   }
 }
-
-// 页面卸载时清理定时器
-onUnmounted(() => {
-  if (trainStatusTimer) {
-    clearInterval(trainStatusTimer)
-    trainStatusTimer = null
-  }
-})
 </script>
 
 <style scoped>

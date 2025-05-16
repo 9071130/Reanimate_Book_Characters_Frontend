@@ -23,25 +23,25 @@
                :class="{ 'active': currentComponent === 'NovelPage' }"
                @click="selectComponent('NovelPage')">
             <el-icon><Document/></el-icon>
-            <span>数据集制作</span>
+            <span>{{ lang === 'zh' ? '数据集制作' : 'Dataset Creation' }}</span>
           </div>
           <div class="nav-menu-item" 
                :class="{ 'active': currentComponent === 'ModelTrainPage' }"
                @click="selectComponent('ModelTrainPage')">
             <el-icon><Setting/></el-icon>
-            <span>模型训练</span>
+            <span>{{ lang === 'zh' ? '模型训练' : 'Model Training' }}</span>
           </div>
           <div class="nav-menu-item" 
                :class="{ 'active': currentComponent === 'ChatPage' }"
                @click="selectComponent('ChatPage')">
             <el-icon><ChatDotSquare/></el-icon>
-            <span>对话</span>
+            <span>{{ lang === 'zh' ? '对话' : 'Chat' }}</span>
           </div>
           <div class="nav-menu-item" 
                :class="{ 'active': currentComponent === 'SettingsPage' }"
                @click="selectComponent('SettingsPage')">
             <el-icon><Setting/></el-icon>
-            <span>设置</span>
+            <span>{{ lang === 'zh' ? '设置' : 'Settings' }}</span>
           </div>
         </el-menu>
         
@@ -66,7 +66,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ref } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import type { Component } from 'vue'
 import { useRouter } from 'vue-router'
 import ChatPage from "@/views/content/chat/ChatPage.vue";
@@ -88,6 +88,7 @@ import {
 const showComponent = ref<Component>(NovelPage)
 const currentComponent = ref('NovelPage')  // 新增：跟踪当前选中的组件
 const router = useRouter()
+const lang = ref(localStorage.getItem('site_lang') || 'zh')
 
 const selectComponent = (component: string) => {
   currentComponent.value = component
@@ -116,6 +117,19 @@ const handleHomeClick = () => {
   // 处理首页图标点击事件
   console.log('首页图标被点击')
 }
+
+// 监听语言变化事件
+onMounted(() => {
+  window.addEventListener('languageChanged', () => {
+    lang.value = localStorage.getItem('site_lang') || 'zh'
+  })
+})
+
+onUnmounted(() => {
+  window.removeEventListener('languageChanged', () => {
+    lang.value = localStorage.getItem('site_lang') || 'zh'
+  })
+})
 </script>
 
 <style scoped>

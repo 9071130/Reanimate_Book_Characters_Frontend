@@ -3,9 +3,9 @@
     <!-- 左侧历史对话记录 -->
     <div class="history-panel">
       <div class="new-chat-container">
-        <div class="model-select-label">选择对话角色：</div>
+        <div class="model-select-label">{{ lang === 'zh' ? '选择对话角色：' : 'Select Character:' }}</div>
         <div class="model-select-bar" style="margin-bottom: 12px;">
-          <el-select v-model="selectedModel" placeholder="请选择模型" class="model-select">
+          <el-select v-model="selectedModel" :placeholder="lang === 'zh' ? '请选择模型' : 'Please select model'" class="model-select">
             <el-option
               v-for="item in modelList"
               :key="item.value"
@@ -14,33 +14,33 @@
             />
           </el-select>
         </div>
-        <div class="voice-select-label">选择配音：</div>
+        <div class="voice-select-label">{{ lang === 'zh' ? '选择配音：' : 'Select Voice:' }}</div>
         <div class="voice-select-bar" style="margin-bottom: 16px;">
-          <el-select v-model="selectedVoice" placeholder="请选择配音" class="model-select">
+          <el-select v-model="selectedVoice" :placeholder="lang === 'zh' ? '请选择配音' : 'Please select voice'" class="model-select">
             <el-option
               v-for="item in audioList"
               :key="item.audio_id"
               :label="item.audio_name"
               :value="item.audio_id"
             />
-            <el-option label="自定义配音，开始录制" value="custom_record" />
-            <el-option label="自定义上传配音" value="custom_upload" />
+            <el-option :label="lang === 'zh' ? '自定义配音，开始录制' : 'Custom Record Voice'" value="custom_record" />
+            <el-option :label="lang === 'zh' ? '自定义上传配音' : 'Custom Upload Voice'" value="custom_upload" />
           </el-select>
         </div>
-        <el-dialog v-model="showCustomRecordDialog" title="自定义配音" width="380px" :close-on-click-modal="false" @close="resetCustomRecord">
+        <el-dialog v-model="showCustomRecordDialog" :title="lang === 'zh' ? '自定义配音' : 'Custom Voice'" width="380px" :close-on-click-modal="false" @close="resetCustomRecord">
           <div class="custom-voice-dialog-content">
-            <el-input v-model="customRecordName" placeholder="请输入配音名称" class="custom-voice-name-input" maxlength="20" show-word-limit style="margin-bottom: 12px;" />
-            <el-input v-model="customRecordText" type="textarea" :rows="3" placeholder="请输入音频对应的文字内容" class="custom-voice-text-input" maxlength="200" show-word-limit style="margin-bottom: 12px;" />
+            <el-input v-model="customRecordName" :placeholder="lang === 'zh' ? '请输入配音名称' : 'Please enter voice name'" class="custom-voice-name-input" maxlength="20" show-word-limit style="margin-bottom: 12px;" />
+            <el-input v-model="customRecordText" type="textarea" :rows="3" :placeholder="lang === 'zh' ? '请输入音频对应的文字内容' : 'Please enter text for audio'" class="custom-voice-text-input" maxlength="200" show-word-limit style="margin-bottom: 12px;" />
             <div class="custom-voice-btns">
               <el-button
                 :type="isCustomRecording ? 'danger' : 'primary'"
                 @click="toggleCustomRecording"
                 v-if="customDialogMode === 'record'"
               >
-                {{ isCustomRecording ? '结束录制' : '开始录制' }}
+                {{ isCustomRecording ? (lang === 'zh' ? '结束录制' : 'Stop Recording') : (lang === 'zh' ? '开始录制' : 'Start Recording') }}
               </el-button>
               <span v-if="isCustomRecording && customDialogMode === 'record'" class="custom-voice-timer">{{ customRecordTime }}</span>
-              <el-button v-if="customRecordUrl && !isCustomRecording && customDialogMode === 'record'" type="warning" @click="deleteCustomRecord">删除录音/重新录制</el-button>
+              <el-button v-if="customRecordUrl && !isCustomRecording && customDialogMode === 'record'" type="warning" @click="deleteCustomRecord">{{ lang === 'zh' ? '删除录音/重新录制' : 'Delete/Redo Recording' }}</el-button>
               <el-upload
                 v-if="customDialogMode === 'upload'"
                 class="custom-upload"
@@ -49,22 +49,22 @@
                 :on-change="onCustomUploadChange"
                 accept="audio/*"
               >
-                <el-button type="primary">选择音频文件</el-button>
+                <el-button type="primary">{{ lang === 'zh' ? '选择音频文件' : 'Select Audio File' }}</el-button>
               </el-upload>
-              <el-button v-if="customRecordUrl && customDialogMode === 'upload'" type="warning" @click="deleteCustomRecord">删除音频/重新上传</el-button>
+              <el-button v-if="customRecordUrl && customDialogMode === 'upload'" type="warning" @click="deleteCustomRecord">{{ lang === 'zh' ? '删除音频/重新上传' : 'Delete/Redo Upload' }}</el-button>
             </div>
             <div v-if="customRecordUrl" class="custom-voice-audio">
               <audio :src="customRecordUrl" controls style="margin-top: 10px; width: 100%; max-width: 100%;" />
             </div>
-            <div v-if="isCustomRecording && customDialogMode === 'record'" class="custom-voice-tip">录制中...</div>
+            <div v-if="isCustomRecording && customDialogMode === 'record'" class="custom-voice-tip">{{ lang === 'zh' ? '录制中...' : 'Recording...' }}</div>
           </div>
           <template #footer>
-            <el-button @click="showCustomRecordDialog = false">取消</el-button>
-            <el-button type="success" :disabled="!customRecordUrl || !customRecordName.trim() || !customRecordText.trim()" @click="confirmCustomRecord">确认</el-button>
+            <el-button @click="showCustomRecordDialog = false">{{ lang === 'zh' ? '取消' : 'Cancel' }}</el-button>
+            <el-button type="success" :disabled="!customRecordUrl || !customRecordName.trim() || !customRecordText.trim()" @click="confirmCustomRecord">{{ lang === 'zh' ? '确认' : 'Confirm' }}</el-button>
           </template>
         </el-dialog>
         <button class="new-chat-btn" @click="newConversation">
-          新建对话
+          {{ lang === 'zh' ? '新建对话' : 'New Chat' }}
           <el-icon class="plus-icon">
             <Plus/>
           </el-icon>
@@ -83,11 +83,11 @@
       <div class="chat-panel">
         <!-- 语音开关 -->
         <div class="audio-switch-bar">
-          <span class="audio-switch-label">语音播报</span>
+          <span class="audio-switch-label">{{ lang === 'zh' ? '语音播报' : 'Voice Broadcast' }}</span>
           <el-switch
             v-model="audioEnabled"
-            active-text="开"
-            inactive-text="关"
+            :active-text="lang === 'zh' ? '开' : 'On'"
+            :inactive-text="lang === 'zh' ? '关' : 'Off'"
             inline-prompt
             style="margin-left: 10px;"
             @change="onAudioSwitchChange"
@@ -120,7 +120,7 @@
             <input
                 v-model="userInput"
                 @keyup.enter="sendMessage"
-                placeholder="输入消息，按回车发送..."
+                :placeholder="lang === 'zh' ? '输入消息，按回车发送...' : 'Type a message and press Enter...'"
                 type="text"
                 :disabled="isInputDisabled"
             >
@@ -143,14 +143,14 @@
                     </el-icon>
                   </el-button>
                 </template>
-                <span>请输入消息</span>
+                <span>{{ lang === 'zh' ? '请输入消息' : 'Please enter a message' }}</span>
               </el-popover>
             </div>
           </div>
         </div>
 
         <div class="disclaimer">
-          服务生成的所有内容均由AI生成，其生成内容的准确性和完整性无法保证
+          {{ lang === 'zh' ? '服务生成的所有内容均由AI生成，其生成内容的准确性和完整性无法保证' : 'All content generated by the service is AI-generated. The accuracy and completeness of the generated content cannot be guaranteed.' }}
         </div>
       </div>
     </div>
@@ -163,6 +163,8 @@ import {Link, Microphone, Plus, Top, User} from '@element-plus/icons-vue';
 import {ElMessage} from 'element-plus';
 import {get, post} from '@/utils/request'
 import {API} from '@/api/config'
+
+const lang = ref(localStorage.getItem('site_lang') || 'zh')
 
 const historyList = ref([
   {
@@ -234,6 +236,11 @@ onMounted(() => {
   if (audioList.value.length > 0) {
     selectedVoice.value = audioList.value[0].audio_id
   }
+
+  // 监听语言变化事件
+  window.addEventListener('languageChanged', () => {
+    lang.value = localStorage.getItem('site_lang') || 'zh'
+  })
 })
 
 watch(selectedVoice, (val) => {
