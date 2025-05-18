@@ -91,13 +91,13 @@
 
         <!-- 第三步：输入密钥并开始制作数据集 -->
         <div class="step-card small-card">
-          <div class="step-title">{{ lang === 'zh' ? '第三步：输入密钥并开始制作数据集' : 'Step 3: Enter API Key and Start Dataset Creation' }}</div>
+          <div class="step-title">{{ lang === 'zh' ? '第三步：输入DeepSeek API' : 'Step 3: Enter DeepSeek API Key and Start Dataset Creation' }}</div>
           <div class="train-section" :class="{ 'disabled-area': !selectedRole }">
             <div class="train-form-bar">
               <el-input v-model="secretKey" :placeholder="lang === 'zh' ? '请输入DeepSeek API密钥' : 'Please enter DeepSeek API key'" class="secret-key-input" clearable :disabled="!selectedRole" />
               <div class="train-btn-bar">
                 <el-button class="train-btn" type="primary" @click="startTrain" :loading="trainLoading" :disabled="!selectedRole || !secretKey">
-                  <el-icon><Upload /></el-icon> {{ lang === 'zh' ? '开始' : 'Start' }}
+                  <el-icon><Upload /></el-icon> {{ lang === 'zh' ? '开始制作数据集' : 'Start' }}
                 </el-button>
               </div>
               <div v-if="!selectedRole" class="step-tip">{{ lang === 'zh' ? '请先完成第二步角色选择' : 'Please complete Step 2: Character Selection first' }}</div>

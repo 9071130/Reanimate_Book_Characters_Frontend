@@ -183,7 +183,7 @@ const userInput = ref('');
 const isListening = ref(false);
 const chatMessagesRef = ref(null);
 const isInputDisabled = ref(false);
-const audioEnabled = ref(true); // 默认开启语音播放
+const audioEnabled = ref(false); // 默认关闭语音播放
 const showCustomRecordDialog = ref(false)
 const isCustomRecording = ref(false)
 const customRecordUrl = ref('')
@@ -298,7 +298,16 @@ const sendMessage = async () => {
     // 获取AI回复
     try {
       const text_res = await get(API.GENERATE, { input_text: prompt, task_id: selectedModel.value })
-      loadingMessage.value.content = text_res.data.content;
+      // 提取'###AI的回复:'后面的内容
+      let aiReply = '';
+      const contentStr = text_res.data.content;
+      const match = contentStr.match(/###AI的回复[:：]\s*([\s\S]*)/);
+      if (match) {
+        aiReply = match[1].trim();
+      } else {
+        aiReply = contentStr;
+      }
+      loadingMessage.value.content = aiReply;
       loadingMessage.value.loading = false;
       nextTick(() => {
         scrollToBottom();
@@ -308,20 +317,42 @@ const sendMessage = async () => {
         // 获取当前选中配音的audio_text和audio_id
         let audioText = ''
         let audioId = ''
+        let audioLocalDir = ''
+        let file_name = ''
         const audioItem = audioList.value.find(item => item.audio_id === selectedVoice.value)
         if (audioItem) {
           audioText = audioItem.audio_text || ''
           audioId = audioItem.audio_id
+          audioLocalDir = audioItem.local_dir
+          file_name = audioItem.file_name
         }
-        const chat_params = {
-          text: text_res.data.content,
+        // 构造tts参数
+        const tts_params = {
+          text: aiReply,
           text_lang: 'zh',
+          // ref_audio_path: `E:/人工智能学习/AI拟人聊天系统/复活小说角色项目/Reanimate_Book_Characters/ref_audio/${audioId}.wav`,
+          ref_audio_path: `E:/人工智能学习/AI拟人聊天系统/演示材料/${file_name}`,
+          aux_ref_audio_paths: [],
           prompt_lang: 'zh',
           prompt_text: audioText,
-          audio_id: audioId
+          top_k: 5,
+          top_p: 1,
+          temperature: 1,
+          text_split_method: 'cut0',
+          batch_size: 1,
+          batch_threshold: 0.75,
+          split_bucket: true,
+          speed_factor: 1.0,
+          fragment_interval: 0.3,
+          seed: -1,
+          media_type: 'wav',
+          streaming_mode: false,
+          parallel_infer: true,
+          repetition_penalty: 1.35
         }
-        const audio_res = await get(API.GET_AUDIO, chat_params,'arraybuffer');
-        if (audio_res.status == 200) {
+        // POST请求tts
+        const audio_res = await get('http://127.0.0.1:9880/tts', tts_params, 'arraybuffer');
+        if (audio_res.status === 200 && audio_res.data) {
           const audioBlob = new Blob([audio_res.data], { type: 'audio/wav' });
           const audioUrl = URL.createObjectURL(audioBlob);
           const audio = new Audio(audioUrl);
@@ -412,6 +443,12 @@ const confirmCustomRecord = async () => {
   formData.append('audio', audioBlob, customRecordName.value.trim() + '.wav')
   formData.append('audio_name', customRecordName.value.trim())
   formData.append('audio_text', customRecordText.value.trim())
+  let fileName = ''
+  if (customDialogMode.value === 'upload' && customRecordUrl.value && window._lastUploadFileName) {
+    fileName = window._lastUploadFileName
+  } else {
+    fileName = customRecordName.value.trim() + '.wav'
+  }
   try {
     const res = await post('/upload_audio', formData, { headers: { 'Content-Type': 'multipart/form-data' } })
     if (res && res.data.status === 200 && res.data.audio_id) {
@@ -419,7 +456,7 @@ const confirmCustomRecord = async () => {
       try {
         list = JSON.parse(localStorage.getItem('audio_list') || '[]')
       } catch {}
-      const newItem = { audio_id: res.data.audio_id, audio_name: customRecordName.value.trim(), audio_text: customRecordText.value.trim() }
+      const newItem = { audio_id: res.data.audio_id, audio_name: customRecordName.value.trim(), audio_text: customRecordText.value.trim(), local_dir: customRecordUrl.value, file_name: fileName }
       list.push(newItem)
       localStorage.setItem('audio_list', JSON.stringify(list))
       audioList.value = list
@@ -454,6 +491,9 @@ const beforeCustomUpload = (file) => {
 const onCustomUploadChange = (file) => {
   const url = URL.createObjectURL(file.raw)
   customRecordUrl.value = url
+  window._lastUploadFileName = file.raw.name
+  customRecordName.value = file.raw.name.replace(/\.wav$/i, '') // 去掉扩展名
+  // 你可以把 file.raw.name 存到 localStorage 或 audio_list
 }
 </script>
 

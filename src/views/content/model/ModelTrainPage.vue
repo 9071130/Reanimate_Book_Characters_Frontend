@@ -2,30 +2,33 @@
   <div class="model-train-main">
     <div class="train-card">
       <div class="train-title">{{ lang === 'zh' ? '模型训练' : 'Model Training' }}</div>
-      <div class="dataset-select-bar">
-        <el-select v-model="selectedDataset" :placeholder="lang === 'zh' ? '请选择数据集' : 'Please select dataset'" class="dataset-select">
-          <el-option 
-            v-for="task in completedTasks" 
-            :key="task.task_id" 
-            :label="`${task.novel_name || ''} ${task.role_name || ''}`.trim()" 
-            :value="task.task_id" 
-          />
-        </el-select>
+      <div class="param-item">
+        <div class="param-label">{{ lang === 'zh' ? '请选择要训练的数据集：' : 'Please select the dataset to train:' }}</div>
+        <div class="dataset-select-bar">
+          <el-select v-model="selectedDataset" :placeholder="lang === 'zh' ? '请选择数据集' : 'Please select dataset'" class="dataset-select">
+            <el-option 
+              v-for="task in completedTasks" 
+              :key="task.task_id" 
+              :label="`${task.novel_name || ''} ${task.role_name || ''}`.trim()" 
+              :value="task.task_id" 
+            />
+          </el-select>
+        </div>
+      </div>
+      <!-- 新增基座模型HuggingFace路径输入框 -->
+      <div class="param-item">
+        <div class="param-label">{{ lang === 'zh' ? '请输入基座模型的HuggingFace路径：' : 'Enter base model HuggingFace path:' }}</div>
+        <el-input
+          v-model="pretrainedModelPath"
+          :placeholder="lang === 'zh' ? '请输入基座模型的HuggingFace路径' : 'Please enter base model HuggingFace path'"
+          class="param-input"
+        />
       </div>
       
       <!-- 隐藏的输入框 -->
       <div style="display: none;">
         <div class="param-item">
-          <div class="param-label">{{ lang === 'zh' ? '预训练模型路径' : 'Pretrained Model Path' }}</div>
-          <el-input 
-            v-model="pretrainedModelPath" 
-            :placeholder="lang === 'zh' ? '请输入预训练模型路径' : 'Please enter pretrained model path'"
-            class="param-input"
-          />
-        </div>
-
-        <div class="param-item">
-          <div class="param-label">HuggingFace API</div>
+          <div class="param-label">{{ lang === 'zh' ? 'HuggingFace API：' : 'HuggingFace API:' }}</div>
           <el-input 
             v-model="hfApi" 
             :placeholder="lang === 'zh' ? '请输入HuggingFace API' : 'Please enter HuggingFace API'"
@@ -34,7 +37,7 @@
         </div>
 
         <div class="param-item">
-          <div class="param-label">{{ lang === 'zh' ? 'Safetensors保存路径' : 'Safetensors Save Path' }}</div>
+          <div class="param-label">{{ lang === 'zh' ? 'Safetensors保存路径：' : 'Safetensors Save Path:' }}</div>
           <el-input 
             v-model="uploadPathSafetensors" 
             :placeholder="lang === 'zh' ? '请输入safetensors格式模型保存路径' : 'Please enter safetensors save path'"
@@ -43,7 +46,7 @@
         </div>
 
         <div class="param-item">
-          <div class="param-label">{{ lang === 'zh' ? 'GGUF保存路径' : 'GGUF Save Path' }}</div>
+          <div class="param-label">{{ lang === 'zh' ? 'GGUF保存路径：' : 'GGUF Save Path:' }}</div>
           <el-input 
             v-model="uploadPathGguf" 
             :placeholder="lang === 'zh' ? '请输入gguf格式模型保存路径' : 'Please enter gguf save path'"
@@ -113,7 +116,7 @@ const lang = ref(localStorage.getItem('site_lang') || 'zh')
 const datasetList = ref([])
 const completedTasks = ref([])
 const selectedDataset = ref('')
-const pretrainedModelPath = ref('')
+const pretrainedModelPath = ref('Qwen/Qwen2.5-3B-Instruct')
 const hfApi = ref('')
 const uploadPathSafetensors = ref('')
 const uploadPathGguf = ref('')
@@ -230,7 +233,7 @@ const startModelTrain = async () => {
     // 构建训练参数
     const trainParams = {
       task_id: selectedTask.task_id,
-      pretrained_model_path: null,
+      pretrained_model_path: pretrainedModelPath.value || null,
       hf_api: null,
       upload_path_safetensors: null,
       upload_path_gguf: null,
