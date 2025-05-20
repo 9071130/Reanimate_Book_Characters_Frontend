@@ -30,6 +30,17 @@
         <el-dialog v-model="showCustomRecordDialog" :title="lang === 'zh' ? '自定义配音' : 'Custom Voice'" width="380px" :close-on-click-modal="false" @close="resetCustomRecord">
           <div class="custom-voice-dialog-content">
             <el-input v-model="customRecordName" :placeholder="lang === 'zh' ? '请输入配音名称' : 'Please enter voice name'" class="custom-voice-name-input" maxlength="20" show-word-limit style="margin-bottom: 12px;" />
+            <el-upload
+              v-if="customDialogMode === 'upload'"
+              class="custom-upload"
+              :show-file-list="false"
+              :before-upload="beforeCustomUpload"
+              :on-change="onCustomUploadChange"
+              accept="audio/*"
+              style="margin-bottom: 12px;"
+            >
+              <el-button type="primary">{{ lang === 'zh' ? '选择音频文件' : 'Select Audio File' }}</el-button>
+            </el-upload>
             <el-input v-model="customRecordText" type="textarea" :rows="3" :placeholder="lang === 'zh' ? '请输入音频对应的文字内容' : 'Please enter text for audio'" class="custom-voice-text-input" maxlength="200" show-word-limit style="margin-bottom: 12px;" />
             <div class="custom-voice-btns">
               <el-button
@@ -41,16 +52,6 @@
               </el-button>
               <span v-if="isCustomRecording && customDialogMode === 'record'" class="custom-voice-timer">{{ customRecordTime }}</span>
               <el-button v-if="customRecordUrl && !isCustomRecording && customDialogMode === 'record'" type="warning" @click="deleteCustomRecord">{{ lang === 'zh' ? '删除录音/重新录制' : 'Delete/Redo Recording' }}</el-button>
-              <el-upload
-                v-if="customDialogMode === 'upload'"
-                class="custom-upload"
-                :show-file-list="false"
-                :before-upload="beforeCustomUpload"
-                :on-change="onCustomUploadChange"
-                accept="audio/*"
-              >
-                <el-button type="primary">{{ lang === 'zh' ? '选择音频文件' : 'Select Audio File' }}</el-button>
-              </el-upload>
               <el-button v-if="customRecordUrl && customDialogMode === 'upload'" type="warning" @click="deleteCustomRecord">{{ lang === 'zh' ? '删除音频/重新上传' : 'Delete/Redo Upload' }}</el-button>
             </div>
             <div v-if="customRecordUrl" class="custom-voice-audio">

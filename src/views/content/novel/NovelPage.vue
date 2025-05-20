@@ -141,6 +141,7 @@
                     >{{ lang === 'zh' ? '未开始' : 'Not Started' }}</el-tag>
                   </template>
                 </el-progress>
+                <el-button size="small" style="margin-left: 16px;" @click="fetchSingleTaskStatus(task.task_id)">{{ lang === 'zh' ? '立即查询' : 'Query Now' }}</el-button>
               </div>
             </div>
           </div>
